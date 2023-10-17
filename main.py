@@ -54,7 +54,10 @@ app.layout = html.Div([
 
 def render_content(tab):
     if tab == 'Explore Data':
-        page =maindef.Explore_Data_Page()
+        page = maindef.Explore_Data_Page()
+        return page
+    elif tab == 'Analysis':
+        page = maindef.Analysis_Page()
         return page
     
 
@@ -116,6 +119,21 @@ def Update_Explore_Data(explore, year, quarter, transaction_type,button4,button1
         return [fig, fig1, statistical_content, top,bargraph1]
     else:
         raise dash.exceptions.PreventUpdate
+
+@app.callback(
+    [Output("bar-chart2", "figure"), Output("bar-chart3", "figure")],
+    [State("analysis", "value"), State("year1", "value"), State("quarter1", "value"), State("type1", "value")],
+    Input('Show1','n_clicks'),
+     prevent_initial_call=False)
+
+def new(analysis, year, quarter, type,button):
+    if analysis == 'Day':
+        fig = maindef.Day_Analysis(year, quarter, type)
+        barchart = maindef.Day_Analysis_barchart(year, quarter, type)
+    elif analysis == 'Month':
+        fig = maindef.Month_Analysis(year, quarter, type)
+        barchart = maindef.Month_Analysis_barchart(year, quarter, type)
+    return [fig, barchart]
 
 if __name__ == '__main__':
     app.run(debug=True)
