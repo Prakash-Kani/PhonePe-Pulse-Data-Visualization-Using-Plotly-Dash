@@ -39,14 +39,22 @@ app = Dash(__name__,
 
 app.layout = html.Div([
     html.H1(children = 'PhonePe Pulse Data Visualization and Exploration',style={'color':'#7F26F0','textAlign':'center'}),
-    dcc.Tabs(id="tabs-example-graph", value='Explore Data', children=[
+    dcc.Tabs(id="tabs", value='Explore Data', children=[
         dcc.Tab(label='Home', value='Home'),
         dcc.Tab(label='Explore Data', value='Explore Data'),
         dcc.Tab(label='Analysis', value='Analysis'),
     ]),
-    html.Div(id='tabs-content-example-graph')
+    html.Div(id='tabs-page')
 ])
 
+@callback(Output('tabs-page', 'children'),
+              Input('tabs', 'value'),
+              prevent_initial_call=False,)
+
+def render_content(tab):
+    if tab == 'Explore Data':
+        page =maindef.Explore_Data_Page()
+        return page
 
 if __name__ == '__main__':
     app.run(debug=True)
