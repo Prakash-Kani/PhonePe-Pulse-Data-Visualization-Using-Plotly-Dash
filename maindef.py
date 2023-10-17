@@ -151,6 +151,14 @@ def Analysis_Page():
 
     return page
 
+
+def Home_Page():
+    page=[ html.Div([
+        html.Div(id='col1', style={'width': '70%', 'display': 'inline-block', 'backgroundColor':"Teal"}),
+        html.Div(id='col2',children= 'adfjasdkjfa', style={'width': '30%', 'display': 'inline-block', 'backgroundColor':"#2F0350"}),
+        ], style={'display': 'flex', 'flex-direction': 'row'})]
+    return page
+
 # ---------------------------------------------------/      Explore Data Callback Functions       /---------------------------------------------------------
 
 
@@ -664,3 +672,30 @@ def Day_Analysis_barchart(year, quarter, type):
             font_size=12
     ),
     return bargraph1
+
+
+def Update_Home_Page():
+    content=[
+        html.H1("Welcome To PhonePe Pulse Data Extraction"),
+        dcc.Markdown(""" In this app, we explore and analyze data from PhonePe Pulse, a powerful data visualization and analytics 
+                        platform provided by PhonePe, a leading digital payment service in India. PhonePe Pulse offers comprehensive 
+                        insights into digital payment trends, transaction data, user behaviors, and more. This project aims to provide a 
+                        brief overview of the capabilities and features of PhonePe Pulse data visualization."""),
+        dcc.Markdown("## Introduction to PhonePe Pulse"),
+        dcc.Markdown(""" **PhonePe Pulse** is a feature-rich dashboard and data visualization tool that enables businesses and users to gain a deeper 
+                     understanding of digital payment trends, transaction data, and consumer behaviors. With PhonePe Pulse, you can unlock valuable 
+                     insights and make data-driven decisions. Here are some key aspects of PhonePe Pulse:"""),
+        dcc.Markdown(""" - **Transaction Insights:** Explore various transaction types, including UPI payments, digital wallet transactions, and more.
+                      Analyze transaction data for specific time periods, regions, and transaction categories."""),
+        dcc.Markdown(""" - **Geographical Analysis:** Gain insights into transactions across different Indian states and regions. 
+                     Understand transaction volume, values, and trends at a regional level."""),
+        dcc.Markdown(" - **User Behavior:** Get a better understanding of user demographics, preferences, and engagement patterns."),
+        dcc.Markdown(" - **Trend Analysis:** Track growth trends in different transaction types, identify seasonality, and more."),
+        dcc.Markdown(" - **User Engagement:** Learn how and when users engage with the PhonePe app, helping businesses optimize their offerings."),
+        dcc.Markdown(" - **Payment Categories:** Explore transaction data related to various payment categories, such as mobile recharges, bill payments, peer-to-peer transfers, and more."),
+        dcc.Markdown(" - **Data Export:** Easily export data for further analysis or reporting."),
+        dcc.Markdown(" - **Custom Dashboards:** Create custom dashboards and visualizations to meet your specific needs and preferences."),
+        dcc.Markdown(" This project aims to showcase the capabilities of PhonePe Pulse and the insights it can offer to businesses and individual users."),
+        dcc.Markdown(" This project will be divided into several sections, each focusing on specific aspects of PhonePe Pulse data, analysis, and visualization. Stay tuned as we dive into the world of digital payment insights!")
+    ]
+    return content
