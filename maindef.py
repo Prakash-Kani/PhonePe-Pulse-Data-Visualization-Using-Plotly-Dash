@@ -103,6 +103,53 @@ def Explore_Data_Page():
 
     return page
 
+def Analysis_Page():
+    page=[html.Div([
+        html.Div([
+            html.H2("PhonePe Pulse"),
+
+            html.Label('Select The Type of Analysis'),
+            dcc.Dropdown(
+            id="analysis",
+            options=[{"label": x, "value": x} for x in ['Day', 'Month']],
+            value='Month',
+            clearable=False,
+        ),
+            html.Label('Select The year'),
+            dcc.Dropdown(
+            id="year1",
+            options=[{"label": x, "value": x} for x in [2018, 2019, 2020, 2021, 2022, 2023]],
+            value=2018,
+            clearable=False,
+        ),
+
+            html.Label('Select The quarter'),
+            dcc.Dropdown(
+            id="quarter1",
+            options=[{"label": i, "value": i} for i in range(1,5)],
+            value=1,
+            clearable=False,),
+
+            html.Label('Select The type of transaction'),
+            dcc.Dropdown(
+            id="type1",
+            options=[{"label": x, "value": x} for x in ['Recharge & bill payments', 'Peer-to-peer payments','Merchant payments', 'Financial Services','Others']],
+            value='Recharge & bill payments',
+            clearable=False),
+            html.Button("Show Details", id="Show1", n_clicks=0),], style={'width': '20%', 'display': 'inline-block','backgroundColor':'#A66EEE'}),
+
+        html.Div([
+            html.H1(children = 'PhonePe Pulse Data Visualization and Exploration',style={'color':'#7F26F0','textAlign':'center'}),
+            html.Hr(),
+            html.H3("Figures and Charts", style={'textAlign':'center'}),
+            # Add your figures and charts here
+            dcc.Graph(id="bar-chart2"),
+            dcc.Graph(id="bar-chart3"),
+        ], style={'width': '80%', 'display': 'inline-block','backgroundColor':"#2F0350"}),
+
+        ], style={'display': 'flex', 'flex-direction': 'row'})]
+
+    return page
 
 # ---------------------------------------------------/      Explore Data Callback Functions       /---------------------------------------------------------
 
@@ -488,6 +535,127 @@ def top10_user_pincode_fig(year, quarter):
     # newdf['Pincode'] = newdf['Pincode'].astype(str)
     bargraph1 = px.bar(df8, x = 'Registered_User', y ='Pincode',  text = 'Registered_User', color='Registered_User', orientation='h',
                 color_continuous_scale = 'thermal', title = 'Top 10 Postal Code Registered User Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+
+
+def Day_Analysis(year, quarter, type):
+    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 91.25) AS Day_Transaction_Count, SUM(Transaction_Amount / 91.25) AS Day_Transaction_Amount
+                        FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
+                        GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
+    data6 = mycursor.fetchall()
+
+    dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+
+    dff3['State']=geo_state
+    dff3['Day_Transaction_Amount'] = dff3['Day_Transaction_Amount'].astype(int)
+
+    fig = px.choropleth(
+        dff3,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='Day_Transaction_Amount',
+        hover_name='State',
+        custom_data=['Day_Transaction_Count', 'Day_Transaction_Amount'],
+        color_continuous_scale='Teal')
+
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Count Per Day = %{customdata[0]}<br>Transaction Amount Per Day = %{customdata[1]}')
+    fig.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E61",
+            font_color='#087FA5',
+            font_size=12
+    ),
+    return fig
+
+def Month_Analysis(year, quarter, type):
+    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, SUM(Transaction_Amount / 3) AS Month_Transaction_Amount
+                        FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
+                        GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
+    data6 = mycursor.fetchall()
+
+    dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+
+    dff3['State']=geo_state
+    dff3['Month_Transaction_Amount'] = dff3['Month_Transaction_Amount'].astype(int)
+
+    fig = px.choropleth(
+        dff3,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='Month_Transaction_Amount',
+        hover_name='State',
+        custom_data=['Month_Transaction_Count', 'Month_Transaction_Amount'],
+        color_continuous_scale='thermal')
+
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Count Per Month = %{customdata[0]}<br>Transaction Amount Per Month = %{customdata[1]}')
+    fig.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E61",
+            font_color='#087FA5',
+            font_size=12
+    ),
+    return fig
+
+# def Month_Analysis_fig(year, quarter, type):
+#     mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, SUM(Transaction_Amount / 3) AS Month_Transaction_Amount
+#                         FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
+#                         GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
+#     data = mycursor.fetchall()
+
+#     dff = pd.DataFrame(data, columns = [i[0] for i in mycursor.description])
+#     fig_sunburst = px.sunburst(
+#     dff,
+#     path=["State", "Month_Transaction_Count"],
+#     values="Month_Transaction_Amount",
+#     hover_data="Month_Transaction_Amount",
+#     color="Month_Transaction_Count",
+#     color_continuous_scale="RdBu",
+#         )
+#     fig_sunburst.update_layout(title_text="Sunburst Chart for")
+#     return fig_sunburst
+
+
+def Month_Analysis_barchart(year, quarter, type):
+    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, SUM(Transaction_Amount / 3) AS Month_Transaction_Amount
+                        FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
+                        GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
+    data6 = mycursor.fetchall()
+
+    dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+    dff3["Month_Transaction_Count"] = dff3["Month_Transaction_Count"].astype(int)
+    bargraph1 = px.bar(dff3, x ='State', y = 'Month_Transaction_Count', text = 'Month_Transaction_Count', color='Month_Transaction_Count',
+                color_continuous_scale = 'Teal', title = 'Top 10 State Transaction Analysis Chart', height = 900)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+def Day_Analysis_barchart(year, quarter, type):
+    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 91.25) AS Day_Transaction_Count, SUM(Transaction_Amount / 91.25) AS Day_Transaction_Amount
+                        FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
+                        GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
+    data6 = mycursor.fetchall()
+
+    dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+    dff3["Day_Transaction_Count"] = dff3["Day_Transaction_Count"].astype(int)
+    bargraph1 = px.bar(dff3, x ='State', y = 'Day_Transaction_Count', text = 'Day_Transaction_Count', color='Day_Transaction_Count',
+                color_continuous_scale = 'Teal', title = 'Top 10 State Transaction Analysis Chart', height = 900)
     bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
     bargraph1.update_layout(
             plot_bgcolor='#B0CAE1',
