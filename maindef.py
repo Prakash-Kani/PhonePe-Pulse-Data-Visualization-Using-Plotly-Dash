@@ -30,7 +30,7 @@ def Number_Conversion(number):
         number ='Unavailable'
     return number
 
-
+# ---------------------------------------------------/          Page Design        /---------------------------------------------------------
 
 def Explore_Data_Page():
     page=[html.Div([
@@ -102,3 +102,397 @@ def Explore_Data_Page():
         ], style={'display': 'flex', 'flex-direction': 'row'})]
 
     return page
+
+
+# ---------------------------------------------------/      Explore Data Callback Functions       /---------------------------------------------------------
+
+
+
+def transaction_fig1(year, quarter):
+    mycursor.execute(f"""SELECT g.State, g.Total_Transaction_Count, g.Total_Transaction_Amount,
+                            round((g.Total_Transaction_Amount / g.Total_Transaction_Count),2) as Average_Transaction_Amount
+                        FROM (
+                            SELECT State, 
+                                SUM(Transaction_Count) as Total_Transaction_Count, 
+                                SUM(Transaction_Amount) as Total_Transaction_Amount
+                            FROM map_transaction  
+                            WHERE Year = {year} AND Quarter = {quarter}
+                            GROUP BY State
+                        ) as g;""")
+    data4 = mycursor.fetchall()
+
+    dff = pd.DataFrame(data4, columns=[i[0] for i in mycursor.description])
+    dff['State'] = geo_state
+
+    fig = px.choropleth(
+        dff,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='Total_Transaction_Amount',
+        hover_name='State',
+        custom_data=['Total_Transaction_Count', 'Total_Transaction_Amount', 'Average_Transaction_Amount'],
+        color_continuous_scale='purples')
+
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Count = %{customdata[0]}<br>Transaction Amount = %{customdata[1]}<br>Average Transaction Amount = %{customdata[2]}')
+    fig.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E61",
+            font_color='#087FA5',
+            font_size=12
+    ),
+    return fig
+
+def transaction_fig2(year, quarter,transaction_type):
+    mycursor.execute(f"""select State, Transaction_Count, Transaction_Type, Transaction_Amount, (Transaction_Amount/Transaction_Count) as Average_Amount
+                        from aggregated_transaction 
+                        where year={year} and quarter={quarter} and Transaction_Type = '{transaction_type}';""")
+    data5 = mycursor.fetchall()
+    dff1 = pd.DataFrame(data5, columns=[i[0] for i in mycursor.description])
+    dff1['State'] = geo_state
+
+    fig1 = px.choropleth(
+        dff1,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='Transaction_Amount',
+        hover_name='State',
+        custom_data=['Transaction_Type', 'Transaction_Count', 'Transaction_Amount', 'Average_Amount'],
+        color_continuous_scale='rainbow')
+
+    fig1.update_geos(fitbounds="locations", visible=False)
+    fig1.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Type = %{customdata[0]}<br>Transaction Count = %{customdata[1]}<br>Transaction Amount = %{customdata[2]}<br>Average Amount = %{customdata[3]}')
+    fig1.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E65",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return fig1
+
+def transaction_stats(year, quarter):
+    mycursor.execute(f"""SELECT g.Transaction_Type, g.Total_Amount, g.Total_Count,  round((g.Total_Amount / g.Total_Count),2) as Average_Transaction
+                                FROM (SELECT Transaction_Type, sum(Transaction_Amount)as Total_Amount, sum(Transaction_Count) as Total_Count FROM aggregated_transaction 
+                                WHERE Year = {year} AND Quarter = {quarter} GROUP BY Transaction_Type) as g;""")
+    data = mycursor.fetchall()
+    df1 = pd.DataFrame(data, columns=[i[0] for i in mycursor.description])
+    totalcount = df1['Total_Count'].sum()
+    totalamount = df1['Total_Amount'].sum()
+    average = df1['Average_Transaction'].mean()
+
+    categories = ([dcc.Markdown(f"#### {i+1}. {df1['Transaction_Type'].iloc[i]} <=>  {Number_Conversion(df1['Total_Amount'].iloc[i])}", style={'color': '#4090F5'}) for i in range(5)])
+
+    statistical_content = [
+        html.H3("Transaction", style={'textAlign': 'center', 'color': 'blue', 'font-size': '50px','font-weight': 'bold', 'font-style': 'italic'}), 
+        html.Hr(),
+        dcc.Markdown('# ***All PhonePe transactions (UPI + Cards + Wallets***)', style={'color': '#FAFAFA'}),
+        dcc.Markdown(f"# {totalcount}", style={'color': '#4090F5'}),
+        dcc.Markdown('# ***Total payment value***', style={'color': '#FAFAFA'}),
+        dcc.Markdown(f'# {Number_Conversion(totalamount)}', style={'color': '#4090F5'}),
+        dcc.Markdown('# ***Avg. transaction value***', style={'color': '#FAFAFA'}),
+        dcc.Markdown(f'# {round(average)}', style={'color': '#4090F5'}),
+        html.Hr(),
+        dcc.Markdown('# ***Categories***', style={'color': '#FAFAFA'}),
+        ]
+    statistical_content.extend(categories)
+
+    return statistical_content
+
+
+def top10_transaction_state(year, quarter):
+    mycursor.execute(f"""SELECT State, Total_Transaction_Count FROM top_transaction_state
+                                    WHERE Year = {year} AND Quarter = {quarter}
+                                ORDER BY Total_Transaction_Count desc limit 10;""")
+    data1 = mycursor.fetchall()
+    df2=pd.DataFrame(data1, columns = [i[0] for i in mycursor.description])
+    # for i in range(df2.shape[0]):
+    details=[dcc.Markdown(f"""### {i + 1}.  {df2['State'].iloc[i].upper()} <=> {Number_Conversion(df2['Total_Transaction_Count'].iloc[i])}""", style={'color': '#4090F5'}) for i in range(df2.shape[0])]
+    top=[
+    html.H1(f'Top 10 State Transaction Analysis', style={'color': '#FAFAFA'}),]
+    top.extend(details)
+    return top
+
+
+def top10_transaction_district(year, quarter):
+    mycursor.execute(f"""SELECT top.District, top.Total_Transaction_Count
+                        FROM (
+                            SELECT District, SUM(Transaction_Count) as Total_Transaction_Count
+                            FROM top_transaction_district
+                            WHERE Year = {year} AND Quarter = {quarter}
+                            GROUP BY District
+                        ) as top
+                        ORDER BY top.Total_Transaction_Count desc limit 10;""")
+    data2 = mycursor.fetchall()
+    df3=pd.DataFrame(data2, columns = [i[0] for i in mycursor.description])
+    details=[dcc.Markdown(f"""### {i + 1}.  {df3['District'].iloc[i].upper()} <=> {Number_Conversion(df3['Total_Transaction_Count'].iloc[i])}""", style={'color': '#4090F5'}) for i in range(df3.shape[0])]
+
+    top=[
+    html.H1(f'Top 10 District Transaction Analysis', style={'color': '#FAFAFA'}),]
+    top.extend(details)
+    return top
+
+def top10_transaction_pincode(year, quarter):
+    mycursor.execute(f"""SELECT Pincode, Transaction_Count
+                        FROM top_transaction_pincode
+                        WHERE Year = {year} AND Quarter = {quarter}
+                        ORDER BY Transaction_Count DESC LIMIT 10;""")
+    data3 = mycursor.fetchall()
+    df4=pd.DataFrame(data3, columns = [i[0] for i in mycursor.description])
+    details=[dcc.Markdown(f"""### {i + 1}.  {df4['Pincode'].iloc[i]} <=> {Number_Conversion(df4['Transaction_Count'].iloc[i])}""", style={'color': '#4090F5'}) for i in range(df4.shape[0])]
+    top=[
+    html.H1(f'Top 10 Postal Code Transaction Analysis', style={'color': '#FAFAFA'}),]
+    top.extend(details)
+    return top
+
+def top10_transaction_state_fig(year, quarter):
+    mycursor.execute(f"""SELECT State, Total_Transaction_Count FROM top_transaction_state
+                                    WHERE Year = {year} AND Quarter = {quarter}
+                                ORDER BY Total_Transaction_Count desc limit 10;""")
+    data1 = mycursor.fetchall()
+    df2=pd.DataFrame(data1, columns = [i[0] for i in mycursor.description])
+    bargraph1 = px.bar(df2, x ='State', y = 'Total_Transaction_Count', text = 'Total_Transaction_Count', color='Total_Transaction_Count',
+                color_continuous_scale = 'thermal', title = 'Top 10 State Transaction Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+def top10_transaction_district_fig(year, quarter):
+    mycursor.execute(f"""SELECT top.District, top.Total_Transaction_Count
+                        FROM (
+                            SELECT District, SUM(Transaction_Count) as Total_Transaction_Count
+                            FROM top_transaction_district
+                            WHERE Year = {year} AND Quarter = {quarter}
+                            GROUP BY District
+                        ) as top
+                        ORDER BY top.Total_Transaction_Count desc limit 10;""")
+    data2 = mycursor.fetchall()
+    df3=pd.DataFrame(data2, columns = [i[0] for i in mycursor.description])
+    df3['Total_Transaction_Count'] = df3['Total_Transaction_Count'].astype(int)
+    bargraph1 = px.bar(df3, x ='District', y = 'Total_Transaction_Count', text = 'Total_Transaction_Count', color='Total_Transaction_Count',
+                color_continuous_scale = 'Teal', title = 'Top 10 District Transaction Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+def top10_transaction_pincode_fig(year, quarter):
+    mycursor.execute(f"""SELECT Pincode, Transaction_Count
+                    FROM top_transaction_pincode
+                    WHERE Year = {year} AND Quarter = {quarter}
+                    ORDER BY Transaction_Count DESC LIMIT 10;""")
+    data3 = mycursor.fetchall()
+    df4=pd.DataFrame(data3, columns = [i[0] for i in mycursor.description])
+    newdf=df4
+    newdf['Pincode'] = newdf['Pincode'].astype(str)
+    bargraph1 = px.bar(newdf, x ='Pincode', y = 'Transaction_Count', text = 'Transaction_Count', color='Transaction_Count',
+                color_continuous_scale = 'thermal', title = 'Top 10 Postal Code Transaction Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+#-----------------------------------------------/    User    /-----------------------------------------
+
+def user_fig1(year, quarter):
+    mycursor.execute(f"""SELECT State, sum(Registered_User) as Registered_PhonePe_Users, sum(App_Opens) as PhonePe_App_Opens FROM map_user 
+                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY State ORDER BY State;""")
+    data6 = mycursor.fetchall()
+
+    dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+
+    dff3['State']=geo_state
+    dff3['Registered_PhonePe_Users'] = dff3['Registered_PhonePe_Users'].astype(int)
+
+    fig = px.choropleth(
+        dff3,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='Registered_PhonePe_Users',
+        hover_name='State',
+        custom_data=['Registered_PhonePe_Users', 'PhonePe_App_Opens'],
+        color_continuous_scale='YlGnBu')
+
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Registered PhonePe User = %{customdata[0]}<br>PhonePe App Opens = %{customdata[1]}')
+    fig.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E61",
+            font_color='#087FA5',
+            font_size=12
+    ),
+    return fig
+
+
+def user_fig2(year, quarter):
+    mycursor.execute(f"""SELECT State, SUM(User_Count) AS User_Count FROM aggregated_user 
+                    WHERE Year = {year} AND Quarter = {quarter} GROUP BY State;""")
+    data10 = mycursor.fetchall()
+
+    dff4 = pd.DataFrame(data10, columns = [i[0] for i in mycursor.description])
+
+    dff4['State']=geo_state
+    if year < 2022:
+        dff4['User_Count'] = dff4['User_Count'].astype(int)
+    if year == 2022 and quarter==1:
+        dff4['User_Count'] = dff4['User_Count'].astype(int)
+
+    fig1 = px.choropleth(
+        dff4,
+        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+        featureidkey='properties.ST_NM',
+        locations='State',
+        color='User_Count',
+        hover_name='State',
+        custom_data='User_Count',
+        color_continuous_scale='earth')
+
+    fig1.update_geos(fitbounds="locations", visible=False)
+    fig1.update_traces(hovertemplate='<b>%{hovertext}</b><br>User_Count = %{customdata[0]}')
+    fig1.update_layout(
+            plot_bgcolor='#10CD04 ',
+            paper_bgcolor="#3D2E65",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return fig1
+
+def user_stats(year, quarter):
+# column 3
+    mycursor.execute(f"""SELECT State, sum(Registered_User) as Registered_PhonePe_Users, sum(App_Opens) as PhonePe_App_Opens FROM map_user 
+                                WHERE Year = {year} AND Quarter = {quarter} GROUP BY State ORDER BY State;""")
+    data1 = mycursor.fetchall()
+    df5=pd.DataFrame(data1, columns = [i[0] for i in mycursor.description])
+    registeredcount=df5['Registered_PhonePe_Users'].sum()
+    appopens=df5['PhonePe_App_Opens'].sum()
+    mycursor.execute(f"""SELECT g.Brand, g.Total_User_Count, g.User_Precentage
+                        FROM (SELECT Brand, sum(User_Count)as Total_User_Count, sum(Percentage) as User_Precentage FROM aggregated_user 
+                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY Brand) as g
+                        ORDER BY Total_User_Count DESC LIMIT 12;""")
+    data2 = mycursor.fetchall()
+    brand=pd.DataFrame(data2, columns = [i[0] for i in mycursor.description])
+    brand_analysis = ([dcc.Markdown(f"### {i+1}. {brand['Brand'].iloc[i]} <=> {Number_Conversion(brand['Total_User_Count'].iloc[i])}", style={'color': '#4090F5'}) for i in range(brand.shape[0])])
+
+    statistical_content=[
+    html.H3("User", style={'textAlign': 'center', 'color': 'blue', 'font-size': '50px','font-weight': 'bold', 'font-style': 'italic'}), 
+    html.Hr(),
+    dcc.Markdown(f'# ***Registered PhonePe users till {quarter} {year}***',style={'color': '#FAFAFA'}),
+    dcc.Markdown(f'# {registeredcount}',style= {'color':'#4090F5'}),
+    dcc.Markdown(f'# ***PhonePe app opens in {quarter} {year}***',style={'color': '#FAFAFA'}),
+    dcc.Markdown(f'# {Number_Conversion(appopens)}',style= {'color':'#4090F5'}),
+    html.Hr(),
+    dcc.Markdown('# ***Brand Analysis***',style= {'color':'#FAFAFA'}),
+    ]
+    statistical_content.extend(brand_analysis)
+    return  statistical_content
+
+
+def top10_user_state(year, quarter):
+    mycursor.execute(f"""SELECT State, Total_Registered_Users FROM top_user_state 
+                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Total_Registered_Users DESC LIMIT 10;""")
+    data8 = mycursor.fetchall()
+    df6 = pd.DataFrame(data8, columns = [i[0] for i in mycursor.description])
+    details=[dcc.Markdown(f"""### {i + 1}.  {df6['State'].iloc[i].upper()} <=> {Number_Conversion(df6['Total_Registered_Users'].iloc[i])}""",style={'color': '#4090F5'}) for i in range(df6.shape[0])]
+    # details = [
+    # html.Div([
+    #     html.Span(f"{i + 1}. {df6['State'].iloc[i].upper()}  <=> ", style={'color': 'white'}),
+    #     html.Span(Number_Conversion(df6['Total_Registered_Users'].iloc[i]), style={'color': 'blue'})
+    # ])
+    # for i in range(df6.shape[0])]
+    top=[dcc.Markdown('#  ***Top 10 State User Analysis***', style={'color': 'white'})]
+    top.extend(details)
+    
+    return top
+
+def top10_user_district(year, quarter):
+    mycursor.execute(f"""SELECT District, sum(Registered_User) as Registered_User FROM top_user_district 
+                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY District ORDER BY Registered_User DESC LIMIT 10;""")
+    data9 = mycursor.fetchall()
+
+    df7 = pd.DataFrame(data9, columns = [i[0] for i in mycursor.description])
+    details=[dcc.Markdown(f"""### {i + 1}.  {df7['District'].iloc[i].upper()} <=> {Number_Conversion(df7['Registered_User'].iloc[i])}""",style={'color': '#4090F5'}) for i in range(df7.shape[0])]
+    top=[dcc.Markdown('#  ***Top 10 District User Analysis***', style={'color': 'white'})]
+    top.extend(details)  
+
+    return top
+
+def top10_user_pincode(year, quarter):
+    mycursor.execute(f"""SELECT Pincode, Registered_User FROM top_user_pincode 
+                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Registered_User DESC LIMIT 10;""")
+    data10 = mycursor.fetchall()
+
+    df8 = pd.DataFrame(data10, columns = [i[0] for i in mycursor.description])
+    details=[dcc.Markdown(f"""## {i + 1}.  {df8['Pincode'].iloc[i]} <=> {Number_Conversion(df8['Registered_User'].iloc[i])}""",style={'color': '#4090F5'}) for i in range(df8.shape[0])]
+    top=[dcc.Markdown('#  ***Top 10 Postal Code User Analysis***', style={'color': 'white'})]
+    top.extend(details)
+
+    return top
+
+
+def top10_user_state_fig(year, quarter):
+    mycursor.execute(f"""SELECT State, Total_Registered_Users FROM top_user_state 
+                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Total_Registered_Users ASC LIMIT 10;""")
+    data8 = mycursor.fetchall()
+    df6 = pd.DataFrame(data8, columns = [i[0] for i in mycursor.description])
+    bargraph1 = px.bar(df6, x = 'Total_Registered_Users', y ='State', text = 'Total_Registered_Users', color='Total_Registered_Users',
+                        orientation='h', color_continuous_scale = 'thermal', title = 'Top 10 State Registered User Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+def top10_user_district_fig(year, quarter):
+    mycursor.execute(f"""SELECT District, sum(Registered_User) as Registered_User FROM top_user_district 
+                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY District ORDER BY Registered_User ASC LIMIT 10;""")
+    data9 = mycursor.fetchall()
+
+    df7 = pd.DataFrame(data9, columns = [i[0] for i in mycursor.description])
+    df7['Registered_User'] = df7['Registered_User'].astype(int)
+    bargraph1 = px.bar(df7, x = 'Registered_User', y ='District', text = 'Registered_User', color='Registered_User', orientation='h',
+                color_continuous_scale = 'Teal', title = 'Top 10 District Registered User Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
+
+def top10_user_pincode_fig(year, quarter):
+    mycursor.execute(f"""SELECT Pincode, Registered_User FROM top_user_pincode 
+                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Registered_User ASC LIMIT 10;""")
+    data10 = mycursor.fetchall()
+
+    df8 = pd.DataFrame(data10, columns = [i[0] for i in mycursor.description])
+    # newdf=df8
+    # newdf['Pincode'] = newdf['Pincode'].astype(str)
+    bargraph1 = px.bar(df8, x = 'Registered_User', y ='Pincode',  text = 'Registered_User', color='Registered_User', orientation='h',
+                color_continuous_scale = 'thermal', title = 'Top 10 Postal Code Registered User Analysis Chart', height = 600)
+    bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
+    bargraph1.update_layout(
+            plot_bgcolor='#B0CAE1',
+            paper_bgcolor="#3D2E70",
+            font_color='#0087FF',
+            font_size=12
+    ),
+    return bargraph1
