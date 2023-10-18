@@ -5,9 +5,9 @@ import json
 import mysql.connector
 import plotly.express as px
 import dash
-from dash import Dash, dcc, html, Input, Output, callback, State, ctx
+from dash import Dash, dcc, html, Input, Output, callback, State, ctx, MATCH
 import maindef
-
+import plotly.graph_objs as go
 
 db = mysql.connector.connect(host = 'localhost',
                              user = 'root',
@@ -22,6 +22,8 @@ def Number_Conversion(number):
         number = f'{round(number / 10**5,2)} Lakhs'
     elif number // 10**3:
         number = f'{round(number / 10**3,2)} K'
+    elif number == 0:
+        number = 'Unavailable'
     return number
  
 
@@ -36,14 +38,14 @@ app = Dash(__name__,
            suppress_callback_exceptions = True)
 
 app.layout = html.Div([
-    html.H1(children = 'PhonePe Pulse Data Visualization and Exploration',style={'color':'#7F26F0','textAlign':'center'}),
+    html.H1(children = 'PhonePe Pulse Data Visualization and Exploration', style={'color':'white','textAlign':'center'}),
     dcc.Tabs(id = "tabs", value = 'Explore Data', children = [
-        dcc.Tab(label = 'Home', value = 'Home'),
-        dcc.Tab(label = 'Explore Data', value = 'Explore Data'),
-        dcc.Tab(label = 'Analysis', value = 'Analysis'),
-    ]),
+        dcc.Tab(label = 'Home', value = 'Home', style={'color': 'white', 'background-color': '#3C2E75'}),
+        dcc.Tab(label = 'Explore Data', value = 'Explore Data', style={'color': 'white', 'background-color': '#3C2E75'}),
+        dcc.Tab(label = 'Analysis', value = 'Analysis', style={'color': 'white', 'background-color': '#3C2E75'}),
+    ], style={ 'textAlign':'center',  'color': 'blue', 'font-size': '35px', 'font-weight': 'bold', 'font-style': 'italic'}),
     html.Div(id = 'tabs-page')
-])
+], style = {'backgroundColor':'#3D2E65'})
 
 @callback(Output('tabs-page', 'children'),
           Input('tabs', 'value'),
@@ -141,4 +143,4 @@ def Update_Home(col):
     return maindef.Update_Home_Page()
 
 if __name__ == '__main__':
-    app.run(debug=True, port = 8050)
+    app.run(debug = True, port = 8060)
