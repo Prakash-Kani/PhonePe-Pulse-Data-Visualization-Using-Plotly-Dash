@@ -7,7 +7,7 @@ import plotly.express as px
 import dash
 from dash import Dash, dcc, html, Input, Output, callback, State, ctx, MATCH
 import maindef
-import plotly.graph_objs as go
+
 
 db = mysql.connector.connect(host = 'localhost',
                              user = 'root',
@@ -47,7 +47,7 @@ app.layout = html.Div([
     html.Div(id = 'tabs-page')
 ], style = {'backgroundColor':'#3D2E65'})
 
-@callback(Output('tabs-page', 'children'),
+@app.callback(Output('tabs-page', 'children'),
           Input('tabs', 'value'),
           prevent_initial_call = False,)
 
@@ -68,7 +68,7 @@ def render_content(tab):
      Output('top-10', 'children'),Output('top-10-fig', 'figure')],
     [State("explore", "value"), State("year", "value"), State("quarter", "value"), State("type", "value")],
     [Input('Show','n_clicks'),Input("State", "n_clicks"),Input("District", "n_clicks"),Input("Postal Code", "n_clicks")],
-    prevent_initial_call = False)
+    prevent_initial_call = False) 
 
 def Update_Explore_Data(explore, year, quarter, transaction_type, button4, button1, button2, button3):
 
@@ -135,7 +135,7 @@ def Update_Analysis(analysis, year, quarter, type, button):
         barchart = maindef.Month_Analysis_barchart(year, quarter, type)
     return [fig, barchart]
 
-@callback(Output('col1', 'children'),
+@app.callback(Output('col1', 'children'),
           Input('col1','children'),
               prevent_initial_call = False,)
 

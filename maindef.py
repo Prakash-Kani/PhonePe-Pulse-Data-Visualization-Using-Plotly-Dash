@@ -19,6 +19,8 @@ data1 = json.loads(response.content)
 geo_state = [i['properties'].get('ST_NM') for i in data1['features']]
 geo_state1 = geo_state.sort(reverse = False)
 
+#--------------------------------------------------/     Number_Conversion          /---------------------------------------------------
+
 def Number_Conversion(number):
     if number // 10**7:
         number = f'{round(number / 10**7,2)} Crores'
@@ -30,7 +32,7 @@ def Number_Conversion(number):
         number = 'Unavailable'
     return number
 
-# ---------------------------------------------------/          Page Design        /---------------------------------------------------------
+# ---------------------------------------------------/      Explore Data Page Layout Design        /---------------------------------------------------------
 
 def Explore_Data_Page():
     page = [html.Div([
@@ -55,7 +57,10 @@ def Explore_Data_Page():
                 html.Label('Select The quarter'),
                 dcc.Dropdown(
                 id = "quarter",
-                options = [{"label": i, "value": i} for i in range(1,5)],
+                options = [{"label": "Q1 (JAN - MAR)", "value": 1},
+                           {"label": "Q2 (APR - JUN)", "value": 2},
+                           {"label": "Q3 (JUL - SEP)", "value": 3},
+                           {"label": "Q4 (OCT - DEC)", "value": 4}],
                 value = 1,
                 clearable = False,),
 
@@ -65,6 +70,8 @@ def Explore_Data_Page():
                 options = [{"label": x, "value": x} for x in ['Recharge & bill payments', 'Peer-to-peer payments', 'Merchant payments', 'Financial Services', 'Others']],
                 value = 'Recharge & bill payments',
                 clearable = False),
+                html.Label('Click "Show Details" To Get The Relevant Results'),
+                html.Br(),
                 html.Button("Show Details", id = "Show", n_clicks = 0)], style = {'width': '15%', 'display': 'inline-block', 'backgroundColor':'#A66EEE'}),
 
 
@@ -99,6 +106,8 @@ def Explore_Data_Page():
 
     return page
 
+#--------------------------------------------------/     Analysis  Page Layout Design     /---------------------------------------------------
+
 def Analysis_Page():
     page = [html.Div([
         html.Div([
@@ -122,7 +131,10 @@ def Analysis_Page():
             html.Label('Select The quarter'),
             dcc.Dropdown(
             id = "quarter1",
-            options = [{"label": i, "value": i} for i in range(1, 4 + 1)],
+            options = [ {"label": "Q1 (JAN - MAR)", "value": 1},
+                        {"label": "Q2 (APR - JUN)", "value": 2},
+                        {"label": "Q3 (JUL - SEP)", "value": 3},
+                        {"label": "Q4 (OCT - DEC)", "value": 4}],
             value = 1,
             clearable = False,),
 
@@ -132,13 +144,12 @@ def Analysis_Page():
             options = [{"label": x, "value": x} for x in ['Recharge & bill payments', 'Peer-to-peer payments', 'Merchant payments', 'Financial Services', 'Others']],
             value = 'Recharge & bill payments',
             clearable = False),
+            html.Label('Click "Show Details" To Get The Relevant Results'),
+            html.Br(),
             html.Button("Show Details", id = "Show1", n_clicks = 0),], style = {'width': '20%', 'display': 'inline-block', 'backgroundColor':'#A66EEE'}),
 
         html.Div([
-            html.H1(children = 'PhonePe Pulse Data Visualization and Exploration', style = {'color':'#7F26F0','textAlign':'center'}),
             html.Hr(),
-            html.H3("Transaction Count and Amount by State in India", style = {'color':'#7F26F0', 'textAlign':'center'}),
-            # Add your figures and charts here
             dcc.Graph(id = "bar-chart2"),
             dcc.Graph(id = "bar-chart3"),
         ], style = {'width': '80%', 'display': 'inline-block', 'backgroundColor':"#2F0350"}),
@@ -147,6 +158,7 @@ def Analysis_Page():
 
     return page
 
+#--------------------------------------------------/     Home Page Layout Design     /---------------------------------------------------
 
 def Home_Page():
     page = [ html.Div([
@@ -155,8 +167,8 @@ def Home_Page():
         ], style = {'display': 'flex', 'flex-direction': 'row'})]
     return page
 
-# ---------------------------------------------------/      Explore Data Callback Functions       /---------------------------------------------------------
-
+# --------------------------------------------------/      Explore Data Callback Functions       /---------------------------------------------------------
+#--------------------------------------------------/        Total Transaction Geo-map Analysis by Statewise     /---------------------------------------------------
 
 
 def transaction_fig1(year, quarter):
@@ -195,6 +207,8 @@ def transaction_fig1(year, quarter):
     ),
     return fig
 
+#--------------------------------------------------/     Transaction Geo-map Category Analysis by Statewise      /---------------------------------------------------
+
 def transaction_fig2(year, quarter,transaction_type):
     mycursor.execute(f"""select State, Transaction_Count, Transaction_Type, Transaction_Amount, (Transaction_Amount/Transaction_Count) as Average_Amount
                         from aggregated_transaction 
@@ -223,6 +237,8 @@ def transaction_fig2(year, quarter,transaction_type):
     ),
     return fig1
 
+#--------------------------------------------------/       Overall Analysis in India           /---------------------------------------------------
+
 def transaction_stats(year, quarter):
     mycursor.execute(f"""SELECT g.Transaction_Type, g.Total_Amount, g.Total_Count,  round((g.Total_Amount / g.Total_Count),2) as Average_Transaction
                                 FROM (SELECT Transaction_Type, sum(Transaction_Amount)as Total_Amount, sum(Transaction_Count) as Total_Count FROM aggregated_transaction 
@@ -248,9 +264,11 @@ def transaction_stats(year, quarter):
         dcc.Markdown('# ***Categories***', style = {'color': '#FAFAFA'}),
         ]
     statistical_content.extend(categories)
+    statistical_content.extend([html.Br() for i in range(7)])
 
     return statistical_content
 
+#--------------------------------------------------/   Top 10 State Analysis       /---------------------------------------------------
 
 def top10_transaction_state(year, quarter):
     mycursor.execute(f"""SELECT State, Total_Transaction_Count FROM top_transaction_state
@@ -265,6 +283,7 @@ def top10_transaction_state(year, quarter):
     top.extend(details)
     return top
 
+#--------------------------------------------------/     Top 10 District Analysis      /---------------------------------------------------
 
 def top10_transaction_district(year, quarter):
     mycursor.execute(f"""SELECT top.District, top.Total_Transaction_Count
@@ -284,6 +303,8 @@ def top10_transaction_district(year, quarter):
     top.extend(details)
     return top
 
+#--------------------------------------------------/     Top 10 Postal Code Analysis      /---------------------------------------------------
+
 def top10_transaction_pincode(year, quarter):
     mycursor.execute(f"""SELECT Pincode, Transaction_Count
                         FROM top_transaction_pincode
@@ -296,6 +317,8 @@ def top10_transaction_pincode(year, quarter):
     html.H1(f'Top 10 Postal Code Transaction Analysis', style = {'color': '#FAFAFA'}),]
     top.extend(details)
     return top
+
+#--------------------------------------------------/     Top 10 State Bar Chart      /---------------------------------------------------
 
 def top10_transaction_state_fig(year, quarter):
     mycursor.execute(f"""SELECT State, Total_Transaction_Count FROM top_transaction_state
@@ -313,6 +336,8 @@ def top10_transaction_state_fig(year, quarter):
             font_size = 12
     ),
     return bargraph1
+
+#--------------------------------------------------/   Top 10 District Bar Chart       /---------------------------------------------------
 
 def top10_transaction_district_fig(year, quarter):
     mycursor.execute(f"""SELECT top.District, top.Total_Transaction_Count
@@ -337,6 +362,8 @@ def top10_transaction_district_fig(year, quarter):
     ),
     return bargraph1
 
+#--------------------------------------------------/     Top 10 Postal Code Bar Chart       /---------------------------------------------------
+
 def top10_transaction_pincode_fig(year, quarter):
     mycursor.execute(f"""SELECT Pincode, Transaction_Count
                     FROM top_transaction_pincode
@@ -357,7 +384,8 @@ def top10_transaction_pincode_fig(year, quarter):
     ),
     return bargraph1
 
-#-----------------------------------------------/    User    /-----------------------------------------
+#--------------------------------------------------/     Register User and AppOpens Geo-map Analysis by Statewise      /---------------------------------------------------
+
 
 def user_fig1(year, quarter):
     mycursor.execute(f"""SELECT State, sum(Registered_User) as Registered_PhonePe_Users, sum(App_Opens) as PhonePe_App_Opens FROM map_user 
@@ -389,6 +417,7 @@ def user_fig1(year, quarter):
     ),
     return fig
 
+#--------------------------------------------------/     Tree-map for Brand Analysis by Statewise       /---------------------------------------------------
 
 def user_fig2(year, quarter):
     mycursor.execute(f"""SELECT State, Brand, User_Count,  Percentage as User_Percentage FROM aggregated_user
@@ -403,6 +432,8 @@ def user_fig2(year, quarter):
 
     return fig1
 
+#--------------------------------------------------/    Overall User Analysis in India       /---------------------------------------------------
+
 def user_stats(year, quarter):
 # column 3
     mycursor.execute(f"""SELECT State, sum(Registered_User) as Registered_PhonePe_Users, sum(App_Opens) as PhonePe_App_Opens FROM map_user 
@@ -414,24 +445,26 @@ def user_stats(year, quarter):
     mycursor.execute(f"""SELECT g.Brand, g.Total_User_Count, g.User_Precentage
                         FROM (SELECT Brand, sum(User_Count)as Total_User_Count, sum(Percentage) as User_Precentage FROM aggregated_user 
                         WHERE Year = {year} AND Quarter = {quarter} GROUP BY Brand) as g
-                        ORDER BY Total_User_Count DESC LIMIT 12;""")
+                        ORDER BY Total_User_Count DESC LIMIT 14;""")
     data2 = mycursor.fetchall()
     brand = pd.DataFrame(data2, columns = [i[0] for i in mycursor.description])
     brand_analysis = ([dcc.Markdown(f"### {i+1}. {brand['Brand'].iloc[i].title()} <=> {Number_Conversion(brand['Total_User_Count'].iloc[i])}", style = {'color': '#4090F5'}) for i in range(brand.shape[0])])
 
     statistical_content=[
-    html.H3("User", style = {'textAlign': 'center', 'color': 'blue', 'font-size': '50px', 'font-weight': 'bold', 'font-style': 'italic'}), 
+    html.H3("User", style = {'textAlign': 'center', 'color': 'blue', 'font-size': '30px', 'font-weight': 'bold', 'font-style': 'italic'}), 
     html.Hr(),
-    dcc.Markdown(f'# ***Registered PhonePe users till {quarter} {year}***', style = {'color': '#FAFAFA'}),
+    dcc.Markdown(f'# ***Registered PhonePe users till Q{quarter} {year}***', style = {'color': '#FAFAFA'}),
     dcc.Markdown(f'# {registeredcount}', style = {'color':'#4090F5'}),
-    dcc.Markdown(f'# ***PhonePe app opens in {quarter} {year}***',style = {'color': '#FAFAFA'}),
+    dcc.Markdown(f'# ***PhonePe app opens in Q{quarter} {year}***',style = {'color': '#FAFAFA'}),
     dcc.Markdown(f'# {Number_Conversion(appopens)}', style = {'color':'#4090F5'}),
+    html.Br(),
     html.Hr(),
     dcc.Markdown('# ***Brand Analysis***', style = {'color':'#FAFAFA'}),
     ]
     statistical_content.extend(brand_analysis)
     return  statistical_content
 
+#--------------------------------------------------/    Top 10 State User Analysis     /---------------------------------------------------
 
 def top10_user_state(year, quarter):
     mycursor.execute(f"""SELECT State, Total_Registered_Users FROM top_user_state 
@@ -450,6 +483,8 @@ def top10_user_state(year, quarter):
     
     return top
 
+#--------------------------------------------------/   Top 10 District User Analysis    /---------------------------------------------------
+
 def top10_user_district(year, quarter):
     mycursor.execute(f"""SELECT District, sum(Registered_User) as Registered_User FROM top_user_district 
                         WHERE Year = {year} AND Quarter = {quarter} GROUP BY District ORDER BY Registered_User DESC LIMIT 10;""")
@@ -461,6 +496,8 @@ def top10_user_district(year, quarter):
     top.extend(details)  
 
     return top
+
+#--------------------------------------------------/   Top 10 Postal Code User Analysis     /---------------------------------------------------
 
 def top10_user_pincode(year, quarter):
     mycursor.execute(f"""SELECT Pincode, Registered_User FROM top_user_pincode 
@@ -474,6 +511,7 @@ def top10_user_pincode(year, quarter):
 
     return top
 
+#--------------------------------------------------/   Barchart for Top 10 State User Analysis    /---------------------------------------------------
 
 def top10_user_state_fig(year, quarter):
     mycursor.execute(f"""SELECT State, Total_Registered_Users FROM top_user_state 
@@ -491,9 +529,11 @@ def top10_user_state_fig(year, quarter):
     ),
     return bargraph1
 
+#--------------------------------------------------/     Barchart for Top 10 State User Analysis      /---------------------------------------------------
+
 def top10_user_district_fig(year, quarter):
     mycursor.execute(f"""SELECT District, sum(Registered_User) as Registered_User FROM top_user_district 
-                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY District ORDER BY Registered_User ASC LIMIT 10;""")
+                        WHERE Year = {year} AND Quarter = {quarter} GROUP BY District ORDER BY Registered_User DESC LIMIT 10;""")
     data9 = mycursor.fetchall()
 
     df7 = pd.DataFrame(data9, columns = [i[0] for i in mycursor.description])
@@ -507,17 +547,17 @@ def top10_user_district_fig(year, quarter):
             font_color='#0087FF',
             font_size=12
     ),
-    return bargraph1
+    return bargraph1 
+
+#--------------------------------------------------/    Barchart for Top 10 State User Analysis     /---------------------------------------------------
 
 def top10_user_pincode_fig(year, quarter):
     mycursor.execute(f"""SELECT Pincode, Registered_User FROM top_user_pincode 
-                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Registered_User ASC LIMIT 10;""")
+                        WHERE Year = {year} AND Quarter = {quarter} ORDER BY Registered_User DESC LIMIT 10;""")
     data10 = mycursor.fetchall()
 
     df8 = pd.DataFrame(data10, columns = [i[0] for i in mycursor.description])
-    # newdf=df8
-    # newdf['Pincode'] = newdf['Pincode'].astype(str)
-    bargraph1 = px.bar(df8, x = 'Registered_User', y ='Pincode',  text = 'Registered_User', color='Registered_User', orientation='h',
+    bargraph1 = px.bar(df8, x = 'Registered_User', y ='Pincode', text = 'Registered_User', color='Registered_User', orientation='h',
                 color_continuous_scale = 'thermal', title = 'Top 10 Postal Code Registered User Analysis Chart', height = 600)
     bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
     bargraph1.update_layout(
@@ -528,7 +568,7 @@ def top10_user_pincode_fig(year, quarter):
     ),
     return bargraph1
 
-
+#--------------------------------------------------/ Geo-map for Approximate Day Analysis       /---------------------------------------------------
 
 def Day_Analysis(year, quarter, type):
     mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 91.25) AS Day_Transaction_Count, SUM(Transaction_Amount / 91.25) AS Day_Transaction_Amount
@@ -537,54 +577,49 @@ def Day_Analysis(year, quarter, type):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+    dff3['State'] = geo_state
 
-    dff3['State']=geo_state
-    dff3['Day_Transaction_Amount'] = dff3['Day_Transaction_Amount'].astype(int)
-
-    fig = px.choropleth(
-        dff3,
-        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
-        featureidkey='properties.ST_NM',
-        locations='State',
-        color='Day_Transaction_Amount',
-        hover_name='State',
-        custom_data=['Day_Transaction_Count', 'Day_Transaction_Amount'],
-        color_continuous_scale='Teal')
+    fig = px.choropleth(dff3,
+                        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                        featureidkey='properties.ST_NM',
+                        locations='State',
+                        color='Day_Transaction_Amount',
+                        hover_name='State',
+                        custom_data=['Day_Transaction_Count', 'Day_Transaction_Amount'],
+                        color_continuous_scale='Teal')
 
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Count Per Day = %{customdata[0]}<br>Transaction Amount Per Day = %{customdata[1]}')
-    fig.update_layout(
-            plot_bgcolor='#10CD04 ',
-            paper_bgcolor="#3D2E61",
-            font_color='#087FA5',
-            font_size=12
+    fig.update_layout(title={'text': '<b>Approximate Transaction Per Day by State in India</b>', 'font': {'color': '#7F26F0', 'size': 20}},
+                    plot_bgcolor='#10CD04 ',
+                    paper_bgcolor="#3D2E61",
+                    font_color='#087FA5',
+                    font_size=12
     ),
     return fig
 
+#--------------------------------------------------/  Geo-map for Approximate Month Analysis     /---------------------------------------------------
 def Month_Analysis(year, quarter, type):
-    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, SUM(Transaction_Amount / 3) AS Month_Transaction_Amount
+    mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, abs(SUM(Transaction_Amount / 3)) AS Month_Transaction_Amount
                         FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
                         GROUP BY State, Year, Transaction_Type ORDER BY Year, State;""")
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
-
     dff3['State']=geo_state
-    dff3['Month_Transaction_Amount'] = dff3['Month_Transaction_Amount'].astype(int)
 
-    fig = px.choropleth(
-        dff3,
-        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
-        featureidkey='properties.ST_NM',
-        locations='State',
-        color='Month_Transaction_Amount',
-        hover_name='State',
-        custom_data=['Month_Transaction_Count', 'Month_Transaction_Amount'],
-        color_continuous_scale='thermal')
+    fig = px.choropleth(dff3,
+                        geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                        featureidkey='properties.ST_NM',
+                        locations='State',
+                        color='Month_Transaction_Amount',
+                        hover_name='State',
+                        custom_data=['Month_Transaction_Count', 'Month_Transaction_Amount'],
+                        color_continuous_scale='thermal')
 
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Transaction Count Per Month = %{customdata[0]}<br>Transaction Amount Per Month = %{customdata[1]}')
-    fig.update_layout(
+    fig.update_layout(title={'text': '<b>Approximate Transaction Per Month by State in India</b>', 'font': {'color': '#7F26F0', 'size': 20}},
             plot_bgcolor='#10CD04 ',
             paper_bgcolor="#3D2E61",
             font_color='#087FA5',
@@ -610,6 +645,7 @@ def Month_Analysis(year, quarter, type):
 #     fig_sunburst.update_layout(title_text="Sunburst Chart for")
 #     return fig_sunburst
 
+#--------------------------------------------------/   Barchart for Approximate Month Analysis      /---------------------------------------------------
 
 def Month_Analysis_barchart(year, quarter, type):
     mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 3) AS Month_Transaction_Count, SUM(Transaction_Amount / 3) AS Month_Transaction_Amount
@@ -620,7 +656,7 @@ def Month_Analysis_barchart(year, quarter, type):
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
     dff3["Month_Transaction_Count"] = dff3["Month_Transaction_Count"].astype(int)
     bargraph1 = px.bar(dff3, x ='State', y = 'Month_Transaction_Count', text = 'Month_Transaction_Count', color='Month_Transaction_Count',
-                color_continuous_scale = 'Teal', title = 'Top 10 State Transaction Analysis Chart', height = 900)
+                color_continuous_scale = 'Teal', title = 'Approximate Transaction Per Month Analysis Chart', height = 900)
     bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
     bargraph1.update_layout(
             plot_bgcolor='#B0CAE1',
@@ -629,7 +665,7 @@ def Month_Analysis_barchart(year, quarter, type):
             font_size=12
     ),
     return bargraph1
-
+#--------------------------------------------------/   Barchart for Approximate Day Analysis      /---------------------------------------------------
 def Day_Analysis_barchart(year, quarter, type):
     mycursor.execute(f"""SELECT State, Year, Transaction_Type, SUM(Transaction_Count / 91.25) AS Day_Transaction_Count, SUM(Transaction_Amount / 91.25) AS Day_Transaction_Amount
                         FROM aggregated_transaction WHERE Quarter = {quarter} and year = {year} and Transaction_Type = '{type}'
@@ -639,17 +675,17 @@ def Day_Analysis_barchart(year, quarter, type):
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
     dff3["Day_Transaction_Count"] = dff3["Day_Transaction_Count"].astype(int)
     bargraph1 = px.bar(dff3, x ='State', y = 'Day_Transaction_Count', text = 'Day_Transaction_Count', color='Day_Transaction_Count',
-                color_continuous_scale = 'Teal', title = 'Top 10 State Transaction Analysis Chart', height = 900)
+                color_continuous_scale = 'Teal', title = 'Approximate Transaction Per Day Analysis Chart', height = 900)
     bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
     bargraph1.update_layout(
             plot_bgcolor='#B0CAE1',
             paper_bgcolor="#3D2E70",
-            font_color='#0087FF',
-            font_size=12
+            font_color ='#0087FF',
+            font_size = 12
     ),
     return bargraph1
 
-
+#--------------------------------------------------/    Home Page Markdowns      /---------------------------------------------------
 def Update_Home_Page():
     content=[
         html.H1("Welcome To PhonePe Pulse Data Extraction"),
@@ -675,3 +711,5 @@ def Update_Home_Page():
         dcc.Markdown(" This project will be divided into several sections, each focusing on specific aspects of PhonePe Pulse data, analysis, and visualization. Stay tuned as we dive into the world of digital payment insights!")
     ]
     return content
+
+#--------------------------------------------------/            End            /---------------------------------------------------
