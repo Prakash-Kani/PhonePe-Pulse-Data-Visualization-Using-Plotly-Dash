@@ -7,31 +7,26 @@ import plotly.express as px
 import dash
 from dash import Dash, dcc, html, Input, Output, callback, State, ctx, MATCH
 import maindef
+import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
-db = mysql.connector.connect(host = 'localhost',
-                             user = 'root',
-                             password = 'Prakashk14',
-                             database = 'phonepe')
+# MYSQL Connection
+mysql_host_name = os.getenv("MYSQL_HOST_NAME")
+mysql_user_name = os.getenv("MYSQL_USER_NAME")
+mysql_password = os.getenv("MYSQL_PASSWORD")
+mysql_database_name = os.getenv("MYSQL_DATABASE_NAME")
+
+db = mysql.connector.connect(host = mysql_host_name,
+                             user = mysql_user_name,
+                             password = mysql_password,
+                             database = mysql_database_name)
 mycursor = db.cursor(buffered = True)
 
-def Number_Conversion(number):
-    if number // 10**7:
-        number = f'{round(number / 10**7,2)} Crores'
-    elif number // 10**5:
-        number = f'{round(number / 10**5,2)} Lakhs'
-    elif number // 10**3:
-        number = f'{round(number / 10**3,2)} K'
-    elif number == 0:
-        number = 'Unavailable'
-    return number
- 
 
-url = "https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson"
-response = requests.get(url)
-data1 = json.loads(response.content)
-geo_state = [i['properties'].get('ST_NM') for i in data1['features']]
-geo_state1 = geo_state.sort(reverse=False)
+
 
 app = Dash(__name__,
            title = 'PhonePe Pulse Data Visualization',

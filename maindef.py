@@ -5,13 +5,24 @@ import json
 import mysql.connector
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback, State, ctx
+import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
-db = mysql.connector.connect(host = 'localhost',
-                             user = 'root',
-                             password = 'Prakashk14',
-                             database = 'phonepe')
+# MYSQL Connection
+mysql_host_name = os.getenv("MYSQL_HOST_NAME")
+mysql_user_name = os.getenv("MYSQL_USER_NAME")
+mysql_password = os.getenv("MYSQL_PASSWORD")
+mysql_database_name = os.getenv("MYSQL_DATABASE_NAME")
+
+db = mysql.connector.connect(host = mysql_host_name,
+                             user = mysql_user_name,
+                             password = mysql_password,
+                             database = mysql_database_name)
 mycursor = db.cursor(buffered = True)
+
 
 url = "https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson"
 response = requests.get(url)
@@ -46,6 +57,7 @@ def Explore_Data_Page():
                 value = 'Transaction',
                 clearable = False,
             ),
+                html.Br(),
                 html.Label('Select The year'),
                 dcc.Dropdown(
                 id = "year",
@@ -53,7 +65,7 @@ def Explore_Data_Page():
                 value = 2018,
                 clearable = False,
             ),
-
+                html.Br(),
                 html.Label('Select The quarter'),
                 dcc.Dropdown(
                 id = "quarter",
@@ -64,12 +76,14 @@ def Explore_Data_Page():
                 value = 1,
                 clearable = False,),
 
+                html.Br(),
                 html.Label('Select The type of transaction'),
                 dcc.Dropdown(
                 id = "type",
                 options = [{"label": x, "value": x} for x in ['Recharge & bill payments', 'Peer-to-peer payments', 'Merchant payments', 'Financial Services', 'Others']],
                 value = 'Recharge & bill payments',
                 clearable = False),
+                html.Br(),
                 html.Label('Click "Show Details" To Get The Relevant Results'),
                 html.Br(),
                 html.Button("Show Details", id = "Show", n_clicks = 0)], style = {'width': '15%', 'display': 'inline-block', 'backgroundColor':'#A66EEE'}),
@@ -110,7 +124,7 @@ def Explore_Data_Page():
 
 def Analysis_Page():
     page = [html.Div([
-        html.Div([
+            html.Div([
             html.H2("PhonePe Pulse"),
 
             html.Label('Select The Type of Analysis'),
@@ -120,6 +134,8 @@ def Analysis_Page():
             value = 'Month',
             clearable = False,
         ),
+
+            html.Br(),
             html.Label('Select The year'),
             dcc.Dropdown(
             id = "year1",
@@ -128,6 +144,7 @@ def Analysis_Page():
             clearable = False,
         ),
 
+            html.Br(),
             html.Label('Select The quarter'),
             dcc.Dropdown(
             id = "quarter1",
@@ -138,12 +155,15 @@ def Analysis_Page():
             value = 1,
             clearable = False,),
 
+            html.Br(),
             html.Label('Select The type of transaction'),
             dcc.Dropdown(
             id = "type1",
             options = [{"label": x, "value": x} for x in ['Recharge & bill payments', 'Peer-to-peer payments', 'Merchant payments', 'Financial Services', 'Others']],
             value = 'Recharge & bill payments',
             clearable = False),
+
+            html.Br(),
             html.Label('Click "Show Details" To Get The Relevant Results'),
             html.Br(),
             html.Button("Show Details", id = "Show1", n_clicks = 0),], style = {'width': '20%', 'display': 'inline-block', 'backgroundColor':'#A66EEE'}),
