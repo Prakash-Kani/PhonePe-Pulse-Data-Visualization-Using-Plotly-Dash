@@ -29,7 +29,9 @@ response = requests.get(url)
 data1 = json.loads(response.content)
 geo_state = [i['properties'].get('ST_NM') for i in data1['features']]
 geo_state1 = geo_state.sort(reverse = False)
-
+mycursor.execute('SELECT DISTINCT(State) from map_transaction')
+data = mycursor.fetchall()
+mapping_state = {i[0]:j for i, j in zip(data, geo_state)}
 #--------------------------------------------------/     Number_Conversion          /---------------------------------------------------
 
 def Number_Conversion(number):
@@ -205,7 +207,9 @@ def transaction_fig1(year, quarter):
     data4 = mycursor.fetchall()
 
     dff = pd.DataFrame(data4, columns = [i[0] for i in mycursor.description])
-    dff['State'] = geo_state
+    # dff['State'] = geo_state
+    dff['State'] = dff['State'].replace(mapping_state)
+    # print(dff)
 
     fig = px.choropleth(
         dff,
@@ -235,7 +239,8 @@ def transaction_fig2(year, quarter,transaction_type):
                         where year={year} and quarter={quarter} and Transaction_Type = '{transaction_type}';""")
     data5 = mycursor.fetchall()
     dff1 = pd.DataFrame(data5, columns = [i[0] for i in mycursor.description])
-    dff1['State'] = geo_state
+    # dff1['State'] = geo_state
+    dff1['State'] = dff1['State'].replace(mapping_state)
 
     fig1 = px.choropleth(
         dff1,
@@ -269,7 +274,7 @@ def transaction_stats(year, quarter):
     totalamount = df1['Total_Amount'].sum()
     average = df1['Average_Transaction'].mean()
 
-    categories = ([dcc.Markdown(f"#### {i+1}. {df1['Transaction_Type'].iloc[i].title()} <=>  {Number_Conversion(df1['Total_Amount'].iloc[i])}", style={'color': '#4090F5'}) for i in range(5)])
+    categories = ([dcc.Markdown(f"#### {i+1}. {df1['Transaction_Type'].iloc[i].title()} <=>  {Number_Conversion(df1['Total_Count'].iloc[i])}", style={'color': '#4090F5'}) for i in range(5)])
 
     statistical_content = [
         html.H1("Transaction", style = {'textAlign': 'center', 'color': 'blue', 'font-size': '35px', 'font-weight': 'bold', 'font-style': 'italic'}), 
@@ -346,6 +351,7 @@ def top10_transaction_state_fig(year, quarter):
                         ORDER BY Total_Transaction_Count desc limit 10;""")
     data1 = mycursor.fetchall()
     df2 = pd.DataFrame(data1, columns = [i[0] for i in mycursor.description])
+    df2['State'] = df2['State'].replace(mapping_state)
     bargraph1 = px.bar(df2, x = 'State', y = 'Total_Transaction_Count', text = 'Total_Transaction_Count', color = 'Total_Transaction_Count',
                 color_continuous_scale = 'thermal', title = 'Top 10 State Transaction Analysis Chart', height = 600)
     bargraph1.update_layout(title_font = dict(size = 33), title_font_color = '#6739b7')
@@ -413,8 +419,8 @@ def user_fig1(year, quarter):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
-
-    dff3['State'] = geo_state
+    dff3['State'] = dff3['State'].replace(mapping_state)
+    # dff3['State'] = geo_state
     dff3['Registered_PhonePe_Users'] = dff3['Registered_PhonePe_Users'].astype(int)
 
     fig = px.choropleth(
@@ -444,6 +450,7 @@ def user_fig2(year, quarter):
                         WHERE Year ={year} and Quarter = {quarter};""")
     data2 = mycursor.fetchall()
     brand = pd.DataFrame(data2, columns = [i[0] for i in mycursor.description])
+    brand['State'] = brand['State'].replace(mapping_state)
     fig1 = px.treemap(brand, path=['State','Brand', 'User_Count', 'User_Percentage'], values='User_Count',
                     color='User_Count', color_continuous_scale='RdBu', hover_data = 'State',
                     title="Treemap Visualization: User Counts by Brand Across States", height = 600)
@@ -538,6 +545,7 @@ def top10_user_state_fig(year, quarter):
                         WHERE Year = {year} AND Quarter = {quarter} ORDER BY Total_Registered_Users ASC LIMIT 10;""")
     data8 = mycursor.fetchall()
     df6 = pd.DataFrame(data8, columns = [i[0] for i in mycursor.description])
+    df6['State'] = df6['State'].replace(mapping_state)
     bargraph1 = px.bar(df6, x = 'Total_Registered_Users', y ='State', text = 'Total_Registered_Users', color='Total_Registered_Users',
                         orientation='h', color_continuous_scale = 'thermal', title = 'Top 10 State Registered User Analysis Chart', height = 600)
     bargraph1.update_layout(title_font=dict(size=33),title_font_color='#6739b7')
@@ -549,7 +557,7 @@ def top10_user_state_fig(year, quarter):
     ),
     return bargraph1
 
-#--------------------------------------------------/     Barchart for Top 10 State User Analysis      /---------------------------------------------------
+#--------------------------------------------------/     Barchart for Top 10 District User Analysis      /---------------------------------------------------
 
 def top10_user_district_fig(year, quarter):
     mycursor.execute(f"""SELECT District, sum(Registered_User) as Registered_User FROM top_user_district 
@@ -569,7 +577,7 @@ def top10_user_district_fig(year, quarter):
     ),
     return bargraph1 
 
-#--------------------------------------------------/    Barchart for Top 10 State User Analysis     /---------------------------------------------------
+#--------------------------------------------------/    Barchart for Top 10 Postal Code User Analysis     /---------------------------------------------------
 
 def top10_user_pincode_fig(year, quarter):
     mycursor.execute(f"""SELECT Pincode, Registered_User FROM top_user_pincode 
@@ -597,7 +605,8 @@ def Day_Analysis(year, quarter, type):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
-    dff3['State'] = geo_state
+    # dff3['State'] = geo_state
+    dff3['State'] = dff3['State'].replace(mapping_state)
 
     fig = px.choropleth(dff3,
                         geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
@@ -626,7 +635,8 @@ def Month_Analysis(year, quarter, type):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
-    dff3['State']=geo_state
+    # dff3['State']=geo_state
+    dff3['State'] = dff3['State'].replace(mapping_state)
 
     fig = px.choropleth(dff3,
                         geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
@@ -674,6 +684,7 @@ def Month_Analysis_barchart(year, quarter, type):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+    dff3['State'] = dff3['State'].replace(mapping_state)
     dff3["Month_Transaction_Count"] = dff3["Month_Transaction_Count"].astype(int)
     bargraph1 = px.bar(dff3, x ='State', y = 'Month_Transaction_Count', text = 'Month_Transaction_Count', color='Month_Transaction_Count',
                 color_continuous_scale = 'Teal', title = 'Approximate Transaction Per Month Analysis Chart', height = 900)
@@ -693,6 +704,7 @@ def Day_Analysis_barchart(year, quarter, type):
     data6 = mycursor.fetchall()
 
     dff3 = pd.DataFrame(data6, columns = [i[0] for i in mycursor.description])
+    dff3['State'] = dff3['State'].replace(mapping_state)
     dff3["Day_Transaction_Count"] = dff3["Day_Transaction_Count"].astype(int)
     bargraph1 = px.bar(dff3, x ='State', y = 'Day_Transaction_Count', text = 'Day_Transaction_Count', color='Day_Transaction_Count',
                 color_continuous_scale = 'Teal', title = 'Approximate Transaction Per Day Analysis Chart', height = 900)
