@@ -50,6 +50,16 @@ from dash import dcc, html, Input, Output, callback, State, ctx
 # If you have a custom module named "maindef"
 import maindef
 ```
+## Setting Up Environment Variables
+
+To securely configure your database connection and credentials, create a `.env` file at the root of your project and define the following environment variables:
+
+```
+MYSQL_HOST_NAME = 'Enter Your MYSQL Host Name'
+MYSQL_USER_NAME = 'Enter Your MYSQL User Name'
+MYSQL_PASSWORD = 'Enter Your MYSQL Password'
+MYSQL_DATABASE_NAME = 'Enter Your MYSQL Database Name'
+```
 
 # ETL Process for PhonePe Pulse Data Extraction
 
@@ -126,19 +136,19 @@ To get started with the PhonePe Pulse Plotly Dash project, follow these steps:
 1. **Clone the Repository:**
    - Begin by cloning this GitHub repository to your local machine. You can use the following command:
      ```
-     git clone https://github.com/your-username/phonepe-pulse-plotly-dash.git
+     git clone https://github.com/Prakash-Kani/PhonePe-Pulse-Data-Visualization-Using-Plotly-Dash.git
      ```
 
-2. **MySQL Database Connection Setup:**
-   - Replace the following placeholders in your code with your MySQL database connection details using "mysql.connector":
-
-   - `your_connection = mysql.connector.connect(
-       host='your_host',
-       user='your_username',
-       password='your_password',
-       database='your_database_name'
-   )`
-
+2. **Create the .env File for MySQL Connection:**
+   - Create a new file named `.env` within your project directory.
+   - Enter the following details in the `.env` file, replacing the placeholder values with your MySQL connection details:
+     ```
+     MYSQL_HOST_NAME = 'Enter Your MySQL Host Name'
+     MYSQL_USER_NAME = 'Enter Your MySQL User Name'
+     MYSQL_PASSWORD = 'Enter Your MySQL Password'
+     MYSQL_DATABASE_NAME = 'Enter Your MySQL Database Name'
+     ```
+   - Save the `.env` file once you've entered your actual MySQL database connection information.
 
 3. **Install Required Libraries:**
    - Ensure that you have all the necessary Python libraries installed. You can find a list of required libraries in the "Required Libraries to Install" section in this README. You can install them using pip.
@@ -155,3 +165,10 @@ To get started with the PhonePe Pulse Plotly Dash project, follow these steps:
    - Once the app is up and running, follow the on-screen instructions within the app to explore the world of PhonePe Pulse data. You'll be able to access and analyze data using interactive maps, bar charts, statistics, and more.
 
 That's it! You're now ready to dive into the data insights offered by the PhonePe Pulse Plotly Dash project, with your MySQL database connection properly set up.
+
+## Demo Video link
+___
+
+To view a demo of the web application, click the link below. 
+
+https://www.linkedin.com/posts/prakash-k-physics_plotly-dash-github-activity-7122536698843959296-kMar?utm_source=share&utm_medium=member_desktop
